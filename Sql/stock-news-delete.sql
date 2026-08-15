@@ -1,0 +1,2 @@
+DELETE FROM "STOCK_NEWS"
+WHERE "ID" = ?id?

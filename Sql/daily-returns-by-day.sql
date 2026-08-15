@@ -1,0 +1,7 @@
+SELECT
+    "TICKER" AS Ticker,
+    "DATE" AS Date,
+    "DAILY_RETURN" AS DailyReturn
+FROM "DYN_STOCKS_DAILY_RETURNS"
+WHERE "DATE" = TO_DATE(?date?)
+ORDER BY "TICKER"

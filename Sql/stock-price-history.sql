@@ -1,0 +1,7 @@
+SELECT
+    "TICKER" AS Ticker,
+    "DATE" AS Date,
+    "CLOSE_PRICE" AS ClosePrice
+FROM "DAILY_STOCK_PRICES"
+WHERE UPPER("TICKER") = UPPER(?ticker?)
+ORDER BY "DATE"

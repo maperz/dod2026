@@ -1,0 +1,8 @@
+SELECT
+    "TICKER" AS Ticker,
+    "DATE" AS Date,
+    "DAILY_RETURN" AS DailyReturn
+FROM "DYN_STOCKS_DAILY_RETURNS"
+WHERE "DATE" = TO_DATE(?date?)
+  AND UPPER("TICKER") LIKE '%' || UPPER(?ticker?) || '%'
+ORDER BY "TICKER"
