@@ -1,0 +1,209 @@
+@page "/weather"
+@inject WeatherRepository Repository
+@inject NavigationManager Navigation
+
+<PageTitle>Weather</PageTitle>
+
+<div class="page-shell">
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">WEATHER</p>
+            <h1>Weather</h1>
+        </div>
+    </header>
+
+    <form class="filters weather-search" aria-label="Weather search" @onsubmit="SearchAsync" @onsubmit:preventDefault="true">
+        <div class="filter-field">
+            <label for="weather-city">City</label>
+            <input id="weather-city"
+                   type="search"
+                   placeholder="Search city"
+                   value="@_city"
+                   @oninput="OnCityChanged"/>
+        </div>
+        <div class="filter-actions">
+            <button type="submit" disabled="@_isLoading">Search</button>
+            <button type="button" @onclick="ResetAsync" disabled="@_isLoading">Reset</button>
+        </div>
+    </form>
+
+    @if (!string.IsNullOrWhiteSpace(_errorMessage))
+    {
+        <div class="error" role="alert">@_errorMessage</div>
+    }
+
+    <section class="table-section">
+        <div class="table-header">
+            <div>
+                <h2>Weather Results</h2>
+                <p>@ResultSummary</p>
+            </div>
+        </div>
+
+        <div class="table-wrap">
+            <table class="weather-table">
+                <thead>
+                <tr>
+                    <th>City</th>
+                    <th>Country</th>
+                    <th class="numeric">Latitude</th>
+                    <th class="numeric">Longitude</th>
+                    <th class="numeric">Temperature (°C)</th>
+                    <th class="numeric">Weather Code</th>
+                    <th class="numeric">Wind Speed (km/h)</th>
+                    <th>Weather Time</th>
+                </tr>
+                </thead>
+                <tbody>
+                @if (_isLoading)
+                {
+                    <tr>
+                        <td colspan="@ColumnCount">Loading...</td>
+                    </tr>
+                }
+                else if (string.IsNullOrWhiteSpace(_lastCity))
+                {
+                    <tr>
+                        <td colspan="@ColumnCount">Enter a city to query weather.</td>
+                    </tr>
+                }
+                else if (_results.Count == 0)
+                {
+                    <tr>
+                        <td colspan="@ColumnCount">No rows found.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var row in _results)
+                    {
+                        <tr>
+                            <td>@row.City</td>
+                            <td>@row.Country</td>
+                            <td class="numeric">@row.Latitude.ToString("N4")</td>
+                            <td class="numeric">@row.Longitude.ToString("N4")</td>
+                            <td class="numeric">@row.Temperature.ToString("N1")</td>
+                            <td class="numeric">@row.WeatherCode</td>
+                            <td class="numeric">@row.WindSpeed.ToString("N1")</td>
+                            <td>@row.Time.ToString("yyyy-MM-dd HH:mm")</td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+@code {
+    private string? _city;
+    private string? _lastCity;
+    private IReadOnlyList<WeatherReport> _results = [];
+    private bool _isLoading;
+    private string? _errorMessage;
+
+    [SupplyParameterFromQuery(Name = "city")]
+    public string? QueryCity { get; set; }
+
+    private const int ColumnCount = 8;
+
+    private string ResultSummary
+    {
+        get
+        {
+            if (_isLoading)
+            {
+                return "Loading weather data";
+            }
+
+            if (string.IsNullOrWhiteSpace(_lastCity))
+            {
+                return "No city selected";
+            }
+
+            return $"{_results.Count} rows for {_lastCity}";
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _city = QueryCity;
+
+        if (!string.IsNullOrWhiteSpace(_city))
+        {
+            await LoadAsync(updateUrl: false);
+        }
+    }
+
+    private void OnCityChanged(ChangeEventArgs args)
+    {
+        _city = args.Value?.ToString();
+    }
+
+    private async Task SearchAsync()
+    {
+        await LoadAsync(updateUrl: true);
+    }
+
+    private async Task ResetAsync()
+    {
+        _city = null;
+        _lastCity = null;
+        _results = [];
+        _errorMessage = null;
+        await UpdateUrlAsync();
+    }
+
+    private async Task LoadAsync(bool updateUrl)
+    {
+        if (string.IsNullOrWhiteSpace(_city))
+        {
+            _lastCity = null;
+            _results = [];
+            _errorMessage = null;
+
+            if (updateUrl)
+            {
+                await UpdateUrlAsync();
+            }
+
+            return;
+        }
+
+        _isLoading = true;
+        _errorMessage = null;
+
+        try
+        {
+            _results = await Repository.SearchByCityAsync(_city);
+            _lastCity = _city.Trim();
+
+            if (updateUrl)
+            {
+                await UpdateUrlAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Could not load weather: {ex.Message}";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private Task UpdateUrlAsync()
+    {
+        var uri = Navigation.GetUriWithQueryParameters(
+            "/weather",
+            new Dictionary<string, object?>
+            {
+                ["city"] = string.IsNullOrWhiteSpace(_lastCity) ? null : _lastCity
+            });
+
+        Navigation.NavigateTo(uri, replace: true);
+        return Task.CompletedTask;
+    }
+
+}

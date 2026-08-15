@@ -1,0 +1,265 @@
+@page "/daily-trends"
+@page "/stock-prices"
+@implements IDisposable
+@inject StockRepository Repository
+@inject NavigationManager Navigation
+
+<PageTitle>Stock Prices</PageTitle>
+
+<div class="page-shell">
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">DAILY_STOCK_PRICES</p>
+            <h1>Stock Prices</h1>
+        </div>
+        <a class="secondary-link" href="@BuildSharedFilterUrl("/trends")">Trends</a>
+    </header>
+
+    <section class="filters" aria-label="Stock prices filters">
+        <div class="filter-field">
+            <label for="trend-date">Day</label>
+            <input id="trend-date" type="date" value="@StockFormat.InputDate(_selectedDate)" @onchange="OnDateChanged"/>
+        </div>
+        <div class="filter-field">
+            <label for="trend-ticker">Ticker</label>
+            <input id="trend-ticker"
+                   type="search"
+                   placeholder="Search ticker"
+                   value="@_tickerSearch"
+                   @oninput="OnTickerChanged"/>
+        </div>
+        <div class="filter-actions">
+            <button type="button" @onclick="ResetFiltersAsync">Reset</button>
+        </div>
+    </section>
+
+    @if (!string.IsNullOrWhiteSpace(_errorMessage))
+    {
+        <div class="error" role="alert">@_errorMessage</div>
+    }
+
+    <section class="table-section">
+        <TableHeader Title="Stock Prices"
+                     TableName="DAILY_STOCK_PRICES"
+                     CurrentDate="@(_prices?.Date ?? _selectedDate)"
+                     PreviousDate="@_prices?.PreviousDate"
+                     NextDate="@_prices?.NextDate"
+                     TotalCount="@(_prices?.Rows.Count ?? 0)"
+                     IsLoading="_isLoading"
+                     OnDayChanged="LoadDayAsync"/>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                <tr>
+                    <th>Ticker</th>
+                    <th>Date</th>
+                    <th class="numeric">Close Price</th>
+                </tr>
+                </thead>
+                <tbody>
+                @if (_isLoading)
+                {
+                    <tr>
+                        <td colspan="3">Loading...</td>
+                    </tr>
+                }
+                else if (_prices is null || _prices.Rows.Count == 0)
+                {
+                    <tr>
+                        <td colspan="3">No rows found.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var row in _prices.Rows)
+                    {
+                        <tr>
+                            <td>
+                                <button type="button" class="ticker-button" @onclick="() => ShowTickerDetails(row.Ticker)">
+                                    @row.Ticker
+                                </button>
+                            </td>
+                            <td>@StockFormat.Date(row.Date)</td>
+                            <td class="numeric">@StockFormat.Dollar(row.ClosePrice)</td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <TickerPriceDialog Ticker="@_selectedTicker"
+                       IsOpen="@(!string.IsNullOrWhiteSpace(_selectedTicker))"
+                       OnClose="CloseTickerDetails"/>
+</div>
+
+@code {
+    private DateTimeOffset? _selectedDate;
+    private string? _tickerSearch;
+    private DateTimeOffset? _initialDate;
+    private DayResult<StockPrice>? _prices;
+    private bool _isLoading;
+    private string? _errorMessage;
+    private CancellationTokenSource? _tickerDebounce;
+    private string? _selectedTicker;
+
+    [SupplyParameterFromQuery(Name = "day")]
+    public string? QueryDate { get; set; }
+
+    [SupplyParameterFromQuery(Name = "ticker")]
+    public string? QueryTicker { get; set; }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        _selectedDate = await Repository.GetLatestStockPriceDateAsync();
+        _initialDate = _selectedDate;
+        ApplyQueryParameters();
+        await LoadAsync(updateUrl: false);
+    }
+
+
+    private async Task OnDateChanged(ChangeEventArgs args)
+    {
+        _selectedDate = StockFormat.ParseInputDate(args.Value?.ToString());
+        await LoadAsync(updateUrl: true);
+    }
+
+
+    private async Task OnTickerChanged(ChangeEventArgs args)
+    {
+        _tickerSearch = args.Value?.ToString();
+        _tickerDebounce?.Cancel();
+        _tickerDebounce?.Dispose();
+
+        var debounce = new CancellationTokenSource();
+        _tickerDebounce = debounce;
+
+        try
+        {
+            await Task.Delay(350, debounce.Token);
+            await LoadAsync(updateUrl: true, debounce.Token);
+        }
+        catch (OperationCanceledException) when (debounce.IsCancellationRequested)
+        {
+        }
+    }
+
+
+    private async Task ResetFiltersAsync()
+    {
+        _selectedDate = _initialDate;
+        _tickerSearch = null;
+        await LoadAsync(updateUrl: true);
+    }
+
+
+    private async Task LoadDayAsync(DateTimeOffset? date)
+    {
+        if (date is null)
+        {
+            return;
+        }
+
+        _selectedDate = date;
+        await LoadAsync(updateUrl: true);
+    }
+
+
+    private async Task LoadAsync(
+        bool updateUrl = false,
+        CancellationToken cancellationToken = default)
+    {
+        _isLoading = true;
+        _errorMessage = null;
+
+        try
+        {
+            var prices = await Repository.GetDailyStockPricesAsync(
+                _selectedDate,
+                _tickerSearch,
+                cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+
+            _prices = prices;
+            _selectedDate = _prices.Date;
+
+            if (updateUrl)
+            {
+                UpdateUrl();
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
+        catch (Exception ex)
+        {
+            if (!cancellationToken.IsCancellationRequested)
+            {
+                _errorMessage = $"Could not load stock prices: {ex.Message}";
+            }
+        }
+        finally
+        {
+            if (!cancellationToken.IsCancellationRequested)
+            {
+                _isLoading = false;
+            }
+        }
+    }
+
+
+    private void ApplyQueryParameters()
+    {
+        _selectedDate = StockFormat.ParseInputDate(QueryDate) ?? _selectedDate;
+
+        _tickerSearch = QueryTicker;
+    }
+
+
+    private void UpdateUrl()
+    {
+        var uri = Navigation.GetUriWithQueryParameters(
+            "/stock-prices",
+            new Dictionary<string, object?>
+            {
+                ["day"] = StockFormat.InputDate(_selectedDate),
+                ["ticker"] = string.IsNullOrWhiteSpace(_tickerSearch) ? null : _tickerSearch.Trim()
+            });
+
+        Navigation.NavigateTo(uri, replace: true);
+    }
+
+
+    private string BuildSharedFilterUrl(string path)
+    {
+        return Navigation.GetUriWithQueryParameters(
+            path,
+            new Dictionary<string, object?>
+            {
+                ["day"] = StockFormat.InputDate(_selectedDate),
+                ["ticker"] = string.IsNullOrWhiteSpace(_tickerSearch) ? null : _tickerSearch.Trim()
+            });
+    }
+
+
+    private void ShowTickerDetails(string ticker)
+    {
+        _selectedTicker = ticker;
+    }
+
+
+    private void CloseTickerDetails()
+    {
+        _selectedTicker = null;
+    }
+
+
+    public void Dispose()
+    {
+        _tickerDebounce?.Cancel();
+        _tickerDebounce?.Dispose();
+    }
+}

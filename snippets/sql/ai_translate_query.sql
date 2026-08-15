@@ -1,0 +1,1 @@
+SELECT AI_TRANSLATE(review_content, 'en', 'de') FROM reviews LIMIT 10;

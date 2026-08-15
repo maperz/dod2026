@@ -1,0 +1,1 @@
+SELECT AI_EMBED('snowflake-arctic-embed-l-v2.0', 'hello world');

@@ -1,0 +1,303 @@
+@page "/stock-news"
+@inject StockNewsRepository Repository
+@inject NavigationManager Navigation
+
+<PageTitle>Stock News</PageTitle>
+
+<div class="page-shell">
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">STOCK_NEWS_EVENT</p>
+            <h1>Stock News</h1>
+        </div>
+        <a class="secondary-link" href="@BuildTickerUrl("/stock-prices", _activeTicker)">Stock Prices</a>
+    </header>
+
+    <form class="filters stock-news-search" aria-label="Stock news semantic search" @onsubmit="SearchAsync" @onsubmit:preventDefault="true">
+        <div class="filter-field search-field">
+            <label for="news-search">Search</label>
+            <input id="news-search"
+                   type="search"
+                   placeholder="Rate cuts, AI demand, earnings miss"
+                   value="@_searchText"
+                   @oninput="OnSearchTextChanged"/>
+        </div>
+        <div class="limit-field">
+            <label for="news-limit">Limit</label>
+            <input id="news-limit"
+                   type="number"
+                   min="1"
+                   max="100"
+                   value="@_limit"
+                   @onchange="OnLimitChanged"/>
+        </div>
+        <div class="search-mode">
+            <label class="switch-field" for="cortex-search">
+                <span>Cortex</span>
+                <input id="cortex-search"
+                       type="checkbox"
+                       role="switch"
+                       checked="@_useCortexSearch"
+                       @onchange="OnCortexSearchChanged"
+                       disabled="@_isLoading"/>
+                <span class="switch-track" aria-hidden="true"></span>
+            </label>
+        </div>
+        <div class="filter-actions">
+            <button type="submit" disabled="@_isLoading">Search</button>
+            <button type="button" @onclick="ResetAsync" disabled="@_isLoading">Reset</button>
+        </div>
+    </form>
+
+    @if (!string.IsNullOrWhiteSpace(_errorMessage))
+    {
+        <div class="error" role="alert">@_errorMessage</div>
+    }
+
+    <section class="table-section">
+        <div class="table-header">
+            <div>
+                <h2>Semantic Matches</h2>
+                <p>@ResultSummary</p>
+            </div>
+        </div>
+
+        <div class="table-wrap">
+            <table class="stock-news-table">
+                <thead>
+                <tr>
+                    <th>Stock</th>
+                    <th>Headline</th>
+                    <th>Publisher</th>
+                    <th>Date</th>
+                    <th>Sentiment</th>
+                    <th>Search Score</th>
+                </tr>
+                </thead>
+                <tbody>
+                @if (_isLoading)
+                {
+                    <tr>
+                        <td colspan="@ColumnCount">Loading...</td>
+                    </tr>
+                }
+                else if (string.IsNullOrWhiteSpace(_lastSearchText))
+                {
+                    <tr>
+                        <td colspan="@ColumnCount">Enter free text to search news by embedding similarity.</td>
+                    </tr>
+                }
+                else if (_results.Count == 0)
+                {
+                    <tr>
+                        <td colspan="@ColumnCount">No rows found.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var row in _results)
+                    {
+                        <tr>
+                            <td>
+                                <a class="ticker-link" href="@BuildTickerUrl("/stock-prices", row.Stock)">@row.Stock</a>
+                                <a class="subtle-link" href="@BuildTickerUrl("/trends", row.Stock)">Ticker</a>
+                            </td>
+                            <td class="headline-cell">@row.Headline</td>
+                            <td>@row.Publisher</td>
+                            <td>@StockFormat.Date(row.Date)</td>
+                            <td>
+                                <span class="@SentimentClass(row.Sentiment)">@row.Sentiment</span>
+                            </td>
+                            <td class="score-cell">@row.SearchScore</td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+@code {
+    private string? _searchText;
+    private string? _lastSearchText;
+    private string? _activeTicker;
+    private int _limit = 25;
+    private bool _useCortexSearch;
+    private IReadOnlyList<StockNewsEventSearchResult> _results = [];
+    private bool _isLoading;
+    private string? _errorMessage;
+
+    [SupplyParameterFromQuery(Name = "q")]
+    public string? Query { get; set; }
+
+    [SupplyParameterFromQuery(Name = "limit")]
+    public int? QueryLimit { get; set; }
+
+    [SupplyParameterFromQuery(Name = "cortex")]
+    public bool? QueryCortex { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _searchText = Query;
+        _limit = ClampLimit(QueryLimit ?? _limit);
+        _useCortexSearch = QueryCortex == true;
+
+        if (!string.IsNullOrWhiteSpace(_searchText))
+        {
+            await LoadAsync(updateUrl: false);
+        }
+    }
+
+    private void OnSearchTextChanged(ChangeEventArgs args)
+    {
+        _searchText = args.Value?.ToString();
+    }
+
+    private async Task OnLimitChanged(ChangeEventArgs args)
+    {
+        if (int.TryParse(args.Value?.ToString(), out var limit))
+        {
+            _limit = ClampLimit(limit);
+        }
+
+        if (!string.IsNullOrWhiteSpace(_lastSearchText))
+        {
+            await LoadAsync(updateUrl: true);
+        }
+    }
+
+    private async Task SearchAsync()
+    {
+        await LoadAsync(updateUrl: true);
+    }
+
+    private async Task OnCortexSearchChanged(ChangeEventArgs args)
+    {
+        _useCortexSearch = args.Value is true;
+
+        if (!string.IsNullOrWhiteSpace(_lastSearchText))
+        {
+            await LoadAsync(updateUrl: true);
+            return;
+        }
+
+        await UpdateUrlAsync();
+    }
+
+    private async Task ResetAsync()
+    {
+        _searchText = null;
+        _lastSearchText = null;
+        _activeTicker = null;
+        _results = [];
+        _errorMessage = null;
+        await UpdateUrlAsync();
+    }
+
+    private async Task LoadAsync(bool updateUrl)
+    {
+        if (string.IsNullOrWhiteSpace(_searchText))
+        {
+            _lastSearchText = null;
+            _results = [];
+            _errorMessage = null;
+
+            if (updateUrl)
+            {
+                await UpdateUrlAsync();
+            }
+
+            return;
+        }
+
+        _isLoading = true;
+        _errorMessage = null;
+
+        try
+        {
+            _limit = ClampLimit(_limit);
+            _results = await Repository.SearchEventsAsync(_searchText, _limit, _useCortexSearch);
+            _lastSearchText = _searchText.Trim();
+            _activeTicker = _results.FirstOrDefault()?.Stock;
+
+            if (updateUrl)
+            {
+                await UpdateUrlAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Could not search stock news: {ex.Message}";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private Task UpdateUrlAsync()
+    {
+        var uri = Navigation.GetUriWithQueryParameters(
+            "/stock-news",
+            new Dictionary<string, object?>
+            {
+                ["q"] = string.IsNullOrWhiteSpace(_lastSearchText) ? null : _lastSearchText,
+                ["limit"] = _limit == 25 ? null : _limit,
+                ["cortex"] = _useCortexSearch ? true : null
+            });
+
+        Navigation.NavigateTo(uri, replace: true);
+        return Task.CompletedTask;
+    }
+
+    private string BuildTickerUrl(string path, string? ticker)
+    {
+        return Navigation.GetUriWithQueryParameters(
+            path,
+            new Dictionary<string, object?>
+            {
+                ["ticker"] = string.IsNullOrWhiteSpace(ticker) ? null : ticker.Trim()
+            });
+    }
+
+    private static string SentimentClass(string sentiment)
+    {
+        var normalized = sentiment.Trim().ToLowerInvariant();
+
+        return normalized switch
+        {
+            "positive" or "bullish" or "buy" => "sentiment-pill positive",
+            "negative" or "bearish" or "sell" => "sentiment-pill negative",
+            _ => "sentiment-pill"
+        };
+    }
+
+    private static int ClampLimit(int limit)
+    {
+        return Math.Clamp(limit, 1, 100);
+    }
+
+    private int ColumnCount => 6;
+
+    private string ResultSummary
+    {
+        get
+        {
+            if (_isLoading)
+            {
+                return "Searching embeddings...";
+            }
+
+            if (string.IsNullOrWhiteSpace(_lastSearchText))
+            {
+                return _useCortexSearch
+                    ? "Ranked by Cortex search scores."
+                    : "Ranked by cosine similarity to the search embedding.";
+            }
+
+            var mode = _useCortexSearch ? "Cortex" : "embedding";
+            return $"{_results.Count} {mode} rows for \"{_lastSearchText}\"";
+        }
+    }
+}

@@ -1,0 +1,36 @@
+{
+  "accentColor": "#D82C6A",
+  "includeRepoRoot": true,
+  "repoRootLabel": "GitHub repository",
+  "qrStyle": {
+    "dots": "extra-rounded",
+    "cornersSquare": "extra-rounded",
+    "cornersDot": "dot"
+  },
+  "paths": [
+    "demo/",
+    "Misc/Data/stock-data.zip"
+  ],
+  "externalLinks": [
+    {
+      "label": "Snowflake app",
+      "url": "https://app.snowflake.com"
+    },
+    {
+      "label": "Snowflake signup",
+      "url": "https://signup.snowflake.com/"
+    },
+    {
+      "label": "Snowflake pricing calculator",
+      "url": "https://snowflake.com/en/pricing-options/calculator"
+    },
+    {
+      "label": "S&P 500 All assets - Daily Updated dataset YASH",
+      "url": "https://www.kaggle.com/datasets/yash16jr/s-and-p500-daily-update-dataset"
+    },
+    {
+      "label": "Financial News Headlines Data - Lucas Pham",
+      "url": "https://www.kaggle.com/datasets/notlucasp/financial-news-headlines"
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+name: Presentation QR Codes
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    name: Generate QR-code HTML
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Generate presentation QR codes
+        run: >
+          python3 .github/workflows/presentation-qr-codes/generate_file_qr_codes.py
+          --output qr-codes.html
+          --branch main
+          --config .github/workflows/presentation-qr-codes/qr-links.json
+
+      - name: Upload QR-code sheet
+        uses: actions/upload-artifact@v4
+        with:
+          name: presentation-qr-codes
+          path: qr-codes.html

@@ -1,0 +1,1 @@
+SELECT AI_TRANSLATE('The quick brown fox jumps over the lazy dog', 'en', 'es');

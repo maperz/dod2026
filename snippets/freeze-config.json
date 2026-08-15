@@ -1,0 +1,18 @@
+{
+    "window": true,
+    "border": {
+        "radius": 8,
+        "width": 4,
+        "color": "#4B4B58"
+    },
+    "background": "#1E1E2F",
+    "language": "sql",
+    "shadow": false,
+    "padding": [20, 40, 20, 20],
+    "margin": "0",
+    "font": {
+        "family": "JetBrains Mono",
+        "size": 14
+    },
+    "line_height": 1.2
+}

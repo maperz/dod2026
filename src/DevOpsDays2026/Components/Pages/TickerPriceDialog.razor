@@ -1,0 +1,132 @@
+@inject StockRepository Repository
+@inject IJSRuntime Js
+
+<dialog class="dialog" @ref="_dialog" @onclose="CloseAsync">
+    <header class="dialog-header">
+        <div>
+            <p class="eyebrow">Stock price history</p>
+            <h2 id="ticker-dialog-title">@Ticker</h2>
+        </div>
+        <button type="button" class="icon-button" aria-label="Close" @onclick="CloseAsync">×</button>
+    </header>
+
+    @if (!string.IsNullOrWhiteSpace(_errorMessage))
+    {
+        <div class="error" role="alert">@_errorMessage</div>
+    }
+    else if (_isLoading)
+    {
+        <div class="dialog-status">Loading price history...</div>
+    }
+    else if (_history.Count == 0)
+    {
+        <div class="dialog-status">No price history found.</div>
+    }
+    else
+    {
+        <div class="chart-summary">
+            <span>@StockFormat.Date(_history[0].Date)</span>
+            <strong>@StockFormat.Dollar(_history[^1].ClosePrice)</strong>
+            <span>@StockFormat.Date(_history[^1].Date)</span>
+        </div>
+
+        <div class="chart-frame">
+            <canvas id="@_chartId" aria-label="@($"{Ticker} stock price history")"></canvas>
+        </div>
+    }
+</dialog>
+
+@code {
+    [Parameter] public string? Ticker { get; set; }
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private readonly string _chartId = $"ticker-chart-{Guid.NewGuid():N}";
+    private ElementReference _dialog;
+    private string? _loadedTicker;
+    private IReadOnlyList<StockPrice> _history = [];
+    private bool _isLoading;
+    private bool _chartNeedsRender;
+    private bool _dialogNeedsOpen;
+    private bool _dialogNeedsClose;
+    private string? _errorMessage;
+
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!IsOpen)
+        {
+            _loadedTicker = null;
+            _dialogNeedsClose = true;
+            return;
+        }
+
+        _dialogNeedsOpen = true;
+
+        if (string.IsNullOrWhiteSpace(Ticker) || Ticker == _loadedTicker)
+        {
+            return;
+        }
+
+        _loadedTicker = Ticker;
+        _isLoading = true;
+        _chartNeedsRender = false;
+        _errorMessage = null;
+        _history = [];
+
+        try
+        {
+            _history = await Repository.GetStockPriceHistoryAsync(Ticker);
+            _chartNeedsRender = _history.Count > 0;
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Could not load price history: {ex.Message}";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_dialogNeedsClose)
+        {
+            _dialogNeedsClose = false;
+            await Js.InvokeVoidAsync("stockTickerDialog.close", _dialog);
+        }
+
+        if (_dialogNeedsOpen)
+        {
+            _dialogNeedsOpen = false;
+            await Js.InvokeVoidAsync("stockTickerDialog.open", _dialog);
+        }
+
+        if (!_chartNeedsRender || _history.Count == 0)
+        {
+            return;
+        }
+
+        _chartNeedsRender = false;
+
+        var labels = _history.Select(row => row.Date.ToString("yyyy-MM-dd")).ToArray();
+        var values = _history.Select(row => row.ClosePrice).ToArray();
+
+        await Js.InvokeVoidAsync(
+            "stockTickerDialog.renderPriceChart",
+            _chartId,
+            Ticker,
+            labels,
+            values);
+    }
+
+
+    private async Task CloseAsync()
+    {
+        await Js.InvokeVoidAsync("stockTickerDialog.destroyChart", _chartId);
+        await Js.InvokeVoidAsync("stockTickerDialog.close", _dialog);
+        await OnClose.InvokeAsync();
+    }
+}

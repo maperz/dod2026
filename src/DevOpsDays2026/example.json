@@ -1,0 +1,11 @@
+{
+  "Snowflake": {
+    "Account": "myorg-myaccount",
+    "User": "my_user",
+    "Password": "my_password",
+    "Warehouse": "COMPUTE_WH",
+    "Database": "DEMO_DB",
+    "Schema": "PUBLIC",
+    "Role": "DEVELOPER"
+  }
+}

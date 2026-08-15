@@ -1,0 +1,21 @@
+@inherits LayoutComponentBase
+@inject NavigationManager Navigation
+
+<nav class="top-nav" aria-label="Primary">
+    <a href="@BuildSharedFilterUrl("/stock-prices")">Stock Prices</a>
+    <a href="@BuildSharedFilterUrl("/trends")">Trends</a>
+    <a href="/stock-news">Stock News</a>
+    <a href="/weather">Weather</a>
+</nav>
+
+<main>
+    @Body
+</main>
+
+@code {
+    private string BuildSharedFilterUrl(string path)
+    {
+        var current = Navigation.ToAbsoluteUri(Navigation.Uri);
+        return $"{path}{current.Query}";
+    }
+}
