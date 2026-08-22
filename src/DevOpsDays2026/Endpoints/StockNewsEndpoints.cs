@@ -1,7 +1,7 @@
-using SnowflakeDapperExample.Data;
-using SnowflakeDapperExample.Models;
+using DevOpsDays2026.Data;
+using DevOpsDays2026.Models;
 
-namespace SnowflakeDapperExample.Endpoints;
+namespace DevOpsDays2026.Endpoints;
 
 public static class StockNewsEndpoints
 {

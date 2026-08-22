@@ -1,4 +1,4 @@
-namespace SnowflakeDapperExample;
+namespace DevOpsDays2026;
 
 public static class EnvironmentFileLoader
 {

@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="src/DevOpsDays2026/DevOpsDays2026.csproj" />
+  <Folder Name="/.github/" />
+  <Folder Name="/.github/workflows/">
+    <File Path=".github\workflows\ci.yml" />
+  </Folder>
+  <Project Path="src/DevOpsDays2026.Tests/DevOpsDays2026.Tests.csproj" />
+</Solution>

@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace SnowflakeDapperExample.Components.Pages;
+namespace DevOpsDays2026.Components.Pages;
 
 public static class StockFormat
 {

@@ -1,7 +1,7 @@
 using System.Data.Common;
 using Snowflake.Data.Client;
 
-namespace SnowflakeDapperExample.Data.Common;
+namespace DevOpsDays2026.Data.Common;
 
 public sealed class SnowflakeConnectionFactory(string connectionString)
 {

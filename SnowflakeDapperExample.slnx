@@ -1,4 +1,0 @@
-<Solution>
-  <Project Path="SnowflakeDapperExample.csproj" />
-  <Project Path="SnowflakeDapperExample.Tests/SnowflakeDapperExample.Tests.csproj" />
-</Solution>

@@ -1,4 +1,4 @@
-namespace SnowflakeDapperExample.Models;
+namespace DevOpsDays2026.Models;
 
 public sealed record DayResult<T>(
     IReadOnlyList<T> Rows,

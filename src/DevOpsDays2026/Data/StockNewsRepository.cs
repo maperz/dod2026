@@ -1,8 +1,8 @@
 using Dapper;
-using SnowflakeDapperExample.Data.Common;
-using SnowflakeDapperExample.Models;
+using DevOpsDays2026.Data.Common;
+using DevOpsDays2026.Models;
 
-namespace SnowflakeDapperExample.Data;
+namespace DevOpsDays2026.Data;
 
 public sealed class StockNewsRepository(SnowflakeConnectionFactory connectionFactory)
 {

@@ -12,17 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Folder Include="Resources\"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <Content Include="sql\queries\*.sql" CopyToOutputDirectory="PreserveNewest"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <Compile Remove="SnowflakeDapperExample.Tests\**\*.cs"/>
-        <Content Remove="SnowflakeDapperExample.Tests\**\*"/>
-        <None Remove="SnowflakeDapperExample.Tests\**\*"/>
+        <Content Include="Sql\**\*.sql" CopyToOutputDirectory="PreserveNewest"/>
     </ItemGroup>
 
 </Project>

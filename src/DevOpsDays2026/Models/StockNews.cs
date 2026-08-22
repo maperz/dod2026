@@ -1,4 +1,4 @@
-namespace SnowflakeDapperExample.Models;
+namespace DevOpsDays2026.Models;
 
 public sealed class StockNews
 {

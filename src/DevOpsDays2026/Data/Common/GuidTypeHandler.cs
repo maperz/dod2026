@@ -1,7 +1,7 @@
 using System.Data;
 using Dapper;
 
-namespace SnowflakeDapperExample.Data.Common;
+namespace DevOpsDays2026.Data.Common;
 
 public sealed class GuidTypeHandler : SqlMapper.TypeHandler<Guid>
 {
