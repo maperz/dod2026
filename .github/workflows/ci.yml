@@ -22,13 +22,23 @@ jobs:
       SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
       SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
       SNOWFLAKE_DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}
-      SNOWFLAKE_SCHEMA: PUBLIC
       SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
       SNOWFLAKE_ENHANCED_EXIT_CODES: "1"
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore DevOpsDays2026.slnx
+
+      - name: Build
+        run: dotnet build DevOpsDays2026.slnx --configuration Release --no-restore
 
       - name: Install Snowflake CLI
         uses: snowflakedb/snowflake-actions@v3
@@ -42,6 +52,12 @@ jobs:
       - name: Create CI Snowflake schema
         run: |
           snow sql -x \
+            --account "${SNOWFLAKE_ACCOUNT}" \
+            --user "${SNOWFLAKE_USER}" \
+            --password "${SNOWFLAKE_PASSWORD}" \
+            --warehouse "${SNOWFLAKE_WAREHOUSE}" \
+            --database "${SNOWFLAKE_DATABASE}" \
+            --role "${SNOWFLAKE_ROLE}" \
             -D "schema_name=${CI_SCHEMA_NAME}" \
             -D "database=${SNOWFLAKE_DATABASE}" \
             -D "role=${SNOWFLAKE_ROLE}" \
@@ -52,30 +68,24 @@ jobs:
               CREATE TRANSIENT SCHEMA IF NOT EXISTS "<% schema_name %>" CLONE "PUBLIC";
             '
 
-      - name: Set up .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 10.0.x
-
-      - name: Restore
-        run: dotnet restore DevOpsDays2026.slnx
-
-      - name: Build
-        run: dotnet build DevOpsDays2026.slnx --configuration Release --no-restore
-
       - name: Test
         run: dotnet test DevOpsDays2026.slnx --configuration Release --no-build --verbosity normal
 
-# Commented out to test if it works
-#      - name: Drop CI Snowflake schema
-#        if: always() && env.CI_SCHEMA_NAME != ''
-#        run: |
-#          snow sql -x \
-#            -D "schema_name=${CI_SCHEMA_NAME}" \
-#            -D "database=${SNOWFLAKE_DATABASE}" \
-#            -D "role=${SNOWFLAKE_ROLE}" \
-#            -q '
-#              USE ROLE "<% role %>";
-#              USE DATABASE "<% database %>";
-#              DROP SCHEMA IF EXISTS "<% schema_name %>";
-#            '
+      - name: Drop CI Snowflake schema
+        if: always() && env.CI_SCHEMA_NAME != ''
+        run: |
+          snow sql -x \
+            --account "${SNOWFLAKE_ACCOUNT}" \
+            --user "${SNOWFLAKE_USER}" \
+            --password "${SNOWFLAKE_PASSWORD}" \
+            --warehouse "${SNOWFLAKE_WAREHOUSE}" \
+            --database "${SNOWFLAKE_DATABASE}" \
+            --role "${SNOWFLAKE_ROLE}" \
+            -D "schema_name=${CI_SCHEMA_NAME}" \
+            -D "database=${SNOWFLAKE_DATABASE}" \
+            -D "role=${SNOWFLAKE_ROLE}" \
+            -q '
+              USE ROLE "<% role %>";
+              USE DATABASE "<% database %>";
+              DROP SCHEMA IF EXISTS "<% schema_name %>";
+            '
