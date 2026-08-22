@@ -15,6 +15,7 @@ jobs:
   build-and-test:
     name: Build and test
     runs-on: ubuntu-latest
+    environment: Default
 
     env:
       SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
