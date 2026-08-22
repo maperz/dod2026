@@ -17,17 +17,17 @@
 @code {
     [Parameter] [EditorRequired] public string Title { get; set; } = string.Empty;
     [Parameter] [EditorRequired] public string TableName { get; set; } = string.Empty;
-    [Parameter] public string? CurrentDate { get; set; }
-    [Parameter] public string? PreviousDate { get; set; }
-    [Parameter] public string? NextDate { get; set; }
+    [Parameter] public DateTimeOffset? CurrentDate { get; set; }
+    [Parameter] public DateTimeOffset? PreviousDate { get; set; }
+    [Parameter] public DateTimeOffset? NextDate { get; set; }
     [Parameter] public long TotalCount { get; set; }
     [Parameter] public bool IsLoading { get; set; }
-    [Parameter] public EventCallback<string?> OnDayChanged { get; set; }
+    [Parameter] public EventCallback<DateTimeOffset?> OnDayChanged { get; set; }
 
-    private string CurrentDateLabel => string.IsNullOrWhiteSpace(CurrentDate)
+    private string CurrentDateLabel => CurrentDate is null
         ? "No day selected"
-        : CurrentDate;
+        : StockFormat.Date(CurrentDate.Value);
 
-    private bool IsPreviousDisabled => IsLoading || string.IsNullOrWhiteSpace(PreviousDate);
-    private bool IsNextDisabled => IsLoading || string.IsNullOrWhiteSpace(NextDate);
+    private bool IsPreviousDisabled => IsLoading || PreviousDate is null;
+    private bool IsNextDisabled => IsLoading || NextDate is null;
 }

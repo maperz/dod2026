@@ -17,7 +17,7 @@
     <section class="filters" aria-label="Trends filters">
         <div class="filter-field">
             <label for="return-date">Day</label>
-            <input id="return-date" type="date" value="@_selectedDate" @onchange="OnDateChanged"/>
+            <input id="return-date" type="date" value="@StockFormat.InputDate(_selectedDate)" @onchange="OnDateChanged"/>
         </div>
         <div class="filter-field">
             <label for="return-ticker">Ticker</label>
@@ -99,9 +99,9 @@
 </div>
 
 @code {
-    private string? _selectedDate;
+    private DateTimeOffset? _selectedDate;
     private string? _tickerSearch;
-    private string? _initialDate;
+    private DateTimeOffset? _initialDate;
     private DayResult<StockDailyReturn>? _returns;
     private bool _isLoading;
     private string? _errorMessage;
@@ -126,7 +126,7 @@
 
     private async Task OnDateChanged(ChangeEventArgs args)
     {
-        _selectedDate = args.Value?.ToString();
+        _selectedDate = StockFormat.ParseInputDate(args.Value?.ToString());
         await LoadAsync(updateUrl: true);
     }
 
@@ -159,9 +159,9 @@
     }
 
 
-    private async Task LoadDayAsync(string? date)
+    private async Task LoadDayAsync(DateTimeOffset? date)
     {
-        if (string.IsNullOrWhiteSpace(date))
+        if (date is null)
         {
             return;
         }
@@ -201,10 +201,7 @@
 
     private void ApplyQueryParameters()
     {
-        if (!string.IsNullOrWhiteSpace(QueryDate))
-        {
-            _selectedDate = QueryDate;
-        }
+        _selectedDate = StockFormat.ParseInputDate(QueryDate) ?? _selectedDate;
 
         _tickerSearch = QueryTicker;
     }
@@ -216,7 +213,7 @@
             "/trends",
             new Dictionary<string, object?>
             {
-                ["day"] = _selectedDate,
+                ["day"] = StockFormat.InputDate(_selectedDate),
                 ["ticker"] = string.IsNullOrWhiteSpace(_tickerSearch) ? null : _tickerSearch.Trim()
             });
 
@@ -230,7 +227,7 @@
             path,
             new Dictionary<string, object?>
             {
-                ["day"] = _selectedDate,
+                ["day"] = StockFormat.InputDate(_selectedDate),
                 ["ticker"] = string.IsNullOrWhiteSpace(_tickerSearch) ? null : _tickerSearch.Trim()
             });
     }

@@ -4,6 +4,28 @@ namespace DevOpsDays2026.Components.Pages;
 
 public static class StockFormat
 {
+    public static string? InputDate(DateTimeOffset? date)
+    {
+        return date?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+    }
+
+    public static DateTimeOffset? ParseInputDate(string? date)
+    {
+        if (string.IsNullOrWhiteSpace(date))
+        {
+            return null;
+        }
+
+        return DateOnly.TryParseExact(
+            date,
+            "yyyy-MM-dd",
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.None,
+            out var parsedDate)
+            ? new DateTimeOffset(parsedDate.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero)
+            : null;
+    }
+
     public static string Date(DateTimeOffset date)
     {
         return date.ToString("d", CultureInfo.CurrentCulture);

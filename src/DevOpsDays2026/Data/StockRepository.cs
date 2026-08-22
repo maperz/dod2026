@@ -7,7 +7,7 @@ namespace DevOpsDays2026.Data;
 public sealed class StockRepository(SnowflakeConnectionFactory connectionFactory)
 {
     public Task<DayResult<StockPrice>> GetDailyStockPricesAsync(
-        string? date,
+        DateTimeOffset? date,
         string? ticker,
         CancellationToken cancellationToken = default)
     {
@@ -23,7 +23,7 @@ public sealed class StockRepository(SnowflakeConnectionFactory connectionFactory
     }
 
     public Task<DayResult<StockDailyReturn>> GetDailyReturnsAsync(
-        string? date,
+        DateTimeOffset? date,
         string? ticker,
         CancellationToken cancellationToken = default)
     {
@@ -38,12 +38,12 @@ public sealed class StockRepository(SnowflakeConnectionFactory connectionFactory
             cancellationToken);
     }
 
-    public Task<string?> GetLatestStockPriceDateAsync(CancellationToken cancellationToken = default)
+    public Task<DateTimeOffset?> GetLatestStockPriceDateAsync(CancellationToken cancellationToken = default)
     {
         return GetLatestDateAsync("latest-stock-price-date.sql", cancellationToken);
     }
 
-    public Task<string?> GetLatestDailyReturnDateAsync(
+    public Task<DateTimeOffset?> GetLatestDailyReturnDateAsync(
         CancellationToken cancellationToken = default)
     {
         return GetLatestDateAsync("latest-daily-return-date.sql", cancellationToken);
@@ -63,7 +63,7 @@ public sealed class StockRepository(SnowflakeConnectionFactory connectionFactory
         return rows.AsList();
     }
 
-    private async Task<string?> GetLatestDateAsync(
+    private async Task<DateTimeOffset?> GetLatestDateAsync(
         string queryFileName,
         CancellationToken cancellationToken)
     {
@@ -71,7 +71,7 @@ public sealed class StockRepository(SnowflakeConnectionFactory connectionFactory
 
         await using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
 
-        return await connection.ExecuteScalarAsync<string?>(
+        return await connection.ExecuteScalarAsync<DateTimeOffset?>(
             new CommandDefinition(sql, cancellationToken: cancellationToken));
     }
 
@@ -81,23 +81,21 @@ public sealed class StockRepository(SnowflakeConnectionFactory connectionFactory
         string latestDateQueryFileName,
         string previousDateQueryFileName,
         string nextDateQueryFileName,
-        string? date,
+        DateTimeOffset? date,
         string? ticker,
         CancellationToken cancellationToken)
     {
         await using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
 
-        date = string.IsNullOrWhiteSpace(date)
-            ? await GetLatestDateAsync(connection, latestDateQueryFileName, cancellationToken)
-            : date;
+        date ??= await GetLatestDateAsync(connection, latestDateQueryFileName, cancellationToken);
 
-        if (string.IsNullOrWhiteSpace(date))
+        if (date is null)
         {
             return new DayResult<T>([], null, null, null);
         }
 
         var parameters = new DynamicParameters();
-        parameters.Add("date", date);
+        parameters.Add("date", date.Value.Date);
 
         var query = queryFileName;
         if (!string.IsNullOrWhiteSpace(ticker))
@@ -114,38 +112,38 @@ public sealed class StockRepository(SnowflakeConnectionFactory connectionFactory
         var previousDate = await GetAdjacentDateAsync(
             connection,
             previousDateQueryFileName,
-            date,
+            date.Value,
             cancellationToken);
 
         var nextDate = await GetAdjacentDateAsync(
             connection,
             nextDateQueryFileName,
-            date,
+            date.Value,
             cancellationToken);
 
         return new DayResult<T>(rows.AsList(), date, previousDate, nextDate);
     }
 
-    private static async Task<string?> GetLatestDateAsync(
+    private static async Task<DateTimeOffset?> GetLatestDateAsync(
         System.Data.Common.DbConnection connection,
         string queryFileName,
         CancellationToken cancellationToken)
     {
         var sql = SqlFileLoader.Load(queryFileName);
 
-        return await connection.ExecuteScalarAsync<string?>(
+        return await connection.ExecuteScalarAsync<DateTimeOffset?>(
             new CommandDefinition(sql, cancellationToken: cancellationToken));
     }
 
-    private static async Task<string?> GetAdjacentDateAsync(
+    private static async Task<DateTimeOffset?> GetAdjacentDateAsync(
         System.Data.Common.DbConnection connection,
         string queryFileName,
-        string date,
+        DateTimeOffset date,
         CancellationToken cancellationToken)
     {
         var sql = SqlFileLoader.Load(queryFileName);
 
-        return await connection.ExecuteScalarAsync<string?>(
-            new CommandDefinition(sql, new { date }, cancellationToken: cancellationToken));
+        return await connection.ExecuteScalarAsync<DateTimeOffset?>(
+            new CommandDefinition(sql, new { date = date.Date }, cancellationToken: cancellationToken));
     }
 }
