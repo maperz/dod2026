@@ -5,6 +5,12 @@ root = true
 indent_size = 4
 max_line_length = 100
 
+[*.cs]
+dotnet_style_allow_multiple_blank_lines_experimental = false
+dotnet_diagnostic.IDE2000.severity = warning
+resharper_csharp_keep_blank_lines_in_code = 1
+resharper_csharp_keep_blank_lines_in_declarations = 1
+
 # Most frequently used .NET-coding-convention properties are supported
 csharp_style_var_for_built_in_types = true
 

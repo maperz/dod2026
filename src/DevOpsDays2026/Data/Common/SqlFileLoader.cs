@@ -22,7 +22,6 @@ public static class SqlFileLoader
         }
     }
 
-
     private static string GetSqlFilePath(string fileName)
     {
         var outputPath = Path.Combine(AppContext.BaseDirectory, "Sql", fileName);

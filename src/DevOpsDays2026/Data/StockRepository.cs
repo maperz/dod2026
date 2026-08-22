@@ -22,7 +22,6 @@ public sealed class StockRepository(SnowflakeConnectionFactory connectionFactory
             cancellationToken);
     }
 
-
     public Task<DayResult<StockDailyReturn>> GetDailyReturnsAsync(
         string? date,
         string? ticker,
@@ -39,18 +38,16 @@ public sealed class StockRepository(SnowflakeConnectionFactory connectionFactory
             cancellationToken);
     }
 
-
     public Task<string?> GetLatestStockPriceDateAsync(CancellationToken cancellationToken = default)
     {
         return GetLatestDateAsync("latest-stock-price-date.sql", cancellationToken);
     }
 
-
-    public Task<string?> GetLatestDailyReturnDateAsync(CancellationToken cancellationToken = default)
+    public Task<string?> GetLatestDailyReturnDateAsync(
+        CancellationToken cancellationToken = default)
     {
         return GetLatestDateAsync("latest-daily-return-date.sql", cancellationToken);
     }
-
 
     public async Task<IReadOnlyList<StockPrice>> GetStockPriceHistoryAsync(
         string ticker,
@@ -66,7 +63,6 @@ public sealed class StockRepository(SnowflakeConnectionFactory connectionFactory
         return rows.AsList();
     }
 
-
     private async Task<string?> GetLatestDateAsync(
         string queryFileName,
         CancellationToken cancellationToken)
@@ -78,7 +74,6 @@ public sealed class StockRepository(SnowflakeConnectionFactory connectionFactory
         return await connection.ExecuteScalarAsync<string?>(
             new CommandDefinition(sql, cancellationToken: cancellationToken));
     }
-
 
     private async Task<DayResult<T>> QueryDayAsync<T>(
         string queryFileName,
@@ -131,7 +126,6 @@ public sealed class StockRepository(SnowflakeConnectionFactory connectionFactory
         return new DayResult<T>(rows.AsList(), date, previousDate, nextDate);
     }
 
-
     private static async Task<string?> GetLatestDateAsync(
         System.Data.Common.DbConnection connection,
         string queryFileName,
@@ -142,7 +136,6 @@ public sealed class StockRepository(SnowflakeConnectionFactory connectionFactory
         return await connection.ExecuteScalarAsync<string?>(
             new CommandDefinition(sql, cancellationToken: cancellationToken));
     }
-
 
     private static async Task<string?> GetAdjacentDateAsync(
         System.Data.Common.DbConnection connection,
@@ -155,6 +148,4 @@ public sealed class StockRepository(SnowflakeConnectionFactory connectionFactory
         return await connection.ExecuteScalarAsync<string?>(
             new CommandDefinition(sql, new { date }, cancellationToken: cancellationToken));
     }
-
-
 }

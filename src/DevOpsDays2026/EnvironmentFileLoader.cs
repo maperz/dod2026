@@ -36,7 +36,6 @@ public static class EnvironmentFileLoader
         }
     }
 
-
     private static string? ResolvePath(string path)
     {
         if (Path.IsPathRooted(path))

@@ -30,7 +30,6 @@ public sealed class StockNewsRepository(SnowflakeConnectionFactory connectionFac
         return rows.AsList();
     }
 
-
     public async Task<StockNews?> GetByIdAsync(
         Guid id,
         CancellationToken cancellationToken = default)
@@ -43,7 +42,6 @@ public sealed class StockNewsRepository(SnowflakeConnectionFactory connectionFac
                 new { id = id.ToString("D") },
                 cancellationToken: cancellationToken));
     }
-
 
     public async Task<StockNews> CreateAsync(
         StockNewsRequest request,
@@ -66,7 +64,6 @@ public sealed class StockNewsRepository(SnowflakeConnectionFactory connectionFac
         return await GetByIdAsync(request.Id, cancellationToken)
                ?? throw new InvalidOperationException("Inserted stock news row could not be read.");
     }
-
 
     public async Task<StockNews?> UpdateAsync(
         Guid id,
@@ -91,7 +88,6 @@ public sealed class StockNewsRepository(SnowflakeConnectionFactory connectionFac
             ? null
             : await GetByIdAsync(id, cancellationToken);
     }
-
 
     public async Task<bool> DeleteAsync(
         Guid id,

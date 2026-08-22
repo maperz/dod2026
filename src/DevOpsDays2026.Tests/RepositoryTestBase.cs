@@ -21,7 +21,7 @@ public abstract class RepositoryTestBase
         SqlMapper.AddTypeHandler(new GuidTypeHandler());
     }
 
-    protected static SnowflakeConnectionFactory? TryCreateSnowflakeConnectionFactory()
+    protected static SnowflakeConnectionFactory CreateSnowflakeConnectionFactory()
     {
         var missingVariables = RequiredSnowflakeEnvironmentVariables
             .Where(name => string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(name)))
@@ -29,9 +29,11 @@ public abstract class RepositoryTestBase
 
         if (missingVariables.Length > 0)
         {
-            return null;
+            throw new InvalidOperationException(
+                $"Missing required environment variables: {string.Join(", ", missingVariables)}");
         }
 
-        return new SnowflakeConnectionFactory(SnowflakeConnectionStringBuilder.BuildFromEnvironment());
+        return new SnowflakeConnectionFactory(
+            SnowflakeConnectionStringBuilder.BuildFromEnvironment());
     }
 }

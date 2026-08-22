@@ -29,7 +29,6 @@ public static class StockFormat
         };
     }
 
-
     public static string DailyReturnClass(double dailyReturn)
     {
         const double roundingTolerance = 0.0000005;

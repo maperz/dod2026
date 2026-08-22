@@ -7,21 +7,13 @@ namespace DevOpsDays2026.Tests;
 public sealed class StockNewsRepositoryTests : RepositoryTestBase
 {
     [Fact]
-    public async Task Create_Update_Read_and_Delete_Stock_News()
+    public async Task Should_be_able_to_create()
     {
-        var connectionFactory = TryCreateSnowflakeConnectionFactory();
-        if (connectionFactory is null)
-        {
-            return;
-        }
-
+        var connectionFactory = CreateSnowflakeConnectionFactory();
         var repository = new StockNewsRepository(connectionFactory);
         var id = Guid.NewGuid();
-        var createRequest = new StockNewsRequest(
-            id,
-            "MSFT",
-            "MSFT opens higher in integration test.",
-            "2026-08-15");
+        var createRequest = CreateStockNewsRequest(id);
+
         try
         {
             var created = await repository.CreateAsync(createRequest);
@@ -30,6 +22,24 @@ public sealed class StockNewsRepositoryTests : RepositoryTestBase
             Assert.Equal("MSFT", created.Ticker);
             Assert.Equal(createRequest.Text, created.Text);
             Assert.Equal(DateTime.Parse(createRequest.Date), created.Date);
+        }
+        finally
+        {
+            await repository.DeleteAsync(id);
+        }
+    }
+
+    [Fact]
+    public async Task Should_be_able_to_create_and_patch()
+    {
+        var connectionFactory = CreateSnowflakeConnectionFactory();
+        var repository = new StockNewsRepository(connectionFactory);
+        var id = Guid.NewGuid();
+        var createRequest = CreateStockNewsRequest(id);
+
+        try
+        {
+            await repository.CreateAsync(createRequest);
 
             var updateRequest = createRequest with
             {
@@ -49,8 +59,29 @@ public sealed class StockNewsRepositoryTests : RepositoryTestBase
         {
             await repository.DeleteAsync(id);
         }
+    }
+
+    [Fact]
+    public async Task Should_be_able_to_delete_after_creating()
+    {
+        var connectionFactory = CreateSnowflakeConnectionFactory();
+        var repository = new StockNewsRepository(connectionFactory);
+        var id = Guid.NewGuid();
+        var createRequest = CreateStockNewsRequest(id);
+
+        await repository.CreateAsync(createRequest);
+        await repository.DeleteAsync(id);
 
         var deleted = await repository.GetByIdAsync(id);
         Assert.Null(deleted);
+    }
+
+    private static StockNewsRequest CreateStockNewsRequest(Guid id)
+    {
+        return new StockNewsRequest(
+            id,
+            "MSFT",
+            "MSFT opens higher in integration test.",
+            "2026-08-15");
     }
 }

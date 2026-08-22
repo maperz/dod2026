@@ -34,14 +34,12 @@ public static class SnowflakeConnectionStringBuilder
         return string.Join(';', parts);
     }
 
-
     private static string Required(string name)
     {
         return Environment.GetEnvironmentVariable(name)
                ?? throw new InvalidOperationException(
                    $"Required environment variable '{name}' is not set.");
     }
-
 
     // ADO.NET connection strings use doubled '=' characters inside values.
     private static string Escape(string value)
