@@ -13,3 +13,13 @@ public sealed record StockNewsRequest(
     string Ticker,
     string Text,
     string Date);
+
+public sealed class StockNewsEventSearchResult
+{
+    public string Headline { get; init; } = string.Empty;
+    public string Publisher { get; init; } = string.Empty;
+    public DateTimeOffset Date { get; init; }
+    public string Stock { get; init; } = string.Empty;
+    public string Sentiment { get; init; } = string.Empty;
+    public string SearchScore { get; init; } = string.Empty;
+}

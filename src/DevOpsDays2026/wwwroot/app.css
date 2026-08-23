@@ -195,6 +195,72 @@ button:disabled {
     gap: 10px;
 }
 
+.search-mode {
+    display: flex;
+}
+
+.switch-field {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 38px;
+    color: #667085;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.switch-field input[type="checkbox"] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+.switch-track {
+    position: relative;
+    width: 42px;
+    height: 24px;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    background: #cfd6df;
+    transition: background 120ms ease;
+}
+
+.switch-track::after {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(16, 24, 40, 0.22);
+    content: "";
+    transition: transform 120ms ease;
+}
+
+.switch-field input:checked + .switch-track {
+    background: #0d5c63;
+}
+
+.switch-field input:checked + .switch-track::after {
+    transform: translateX(18px);
+}
+
+.switch-field input:focus-visible + .switch-track {
+    outline: 2px solid #4f8a8b;
+    outline-offset: 2px;
+}
+
+.switch-field input:disabled + .switch-track {
+    opacity: 0.55;
+}
+
 .table-section {
     margin-top: 24px;
     border: 1px solid #dce3ec;
@@ -276,6 +342,65 @@ tr:last-child td {
 .ticker-button:hover:not(:disabled) {
     background: transparent;
     color: #09484d;
+}
+
+.ticker-link,
+.subtle-link {
+    color: #0d5c63;
+    font-weight: 700;
+    text-underline-offset: 3px;
+}
+
+.subtle-link {
+    display: block;
+    margin-top: 4px;
+    color: #667085;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.stock-news-table {
+    min-width: 940px;
+}
+
+.headline-cell {
+    min-width: 360px;
+    max-width: 560px;
+    white-space: normal;
+    line-height: 1.35;
+}
+
+.score-cell {
+    min-width: 150px;
+    color: #475467;
+    font-variant-numeric: tabular-nums;
+}
+
+.sentiment-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 26px;
+    border: 1px solid #cfd6df;
+    border-radius: 999px;
+    background: #f8fafc;
+    padding: 0 10px;
+    color: #475467;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: capitalize;
+}
+
+.sentiment-pill.positive {
+    border-color: #abefc6;
+    background: #ecfdf3;
+    color: #067647;
+}
+
+.sentiment-pill.negative {
+    border-color: #fecdca;
+    background: #fef3f2;
+    color: #b42318;
 }
 
 .return-value {

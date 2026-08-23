@@ -1,11 +1,14 @@
 using Dapper;
 using DevOpsDays2026.Data.Common;
 using DevOpsDays2026.Models;
+using System.Text.Json;
 
 namespace DevOpsDays2026.Data;
 
 public sealed class StockNewsRepository(SnowflakeConnectionFactory connectionFactory)
 {
+    private const int MaxSearchResults = 100;
+
     public async Task<IReadOnlyList<StockNews>> GetAllAsync(
         string? ticker = null,
         CancellationToken cancellationToken = default)
@@ -28,6 +31,59 @@ public sealed class StockNewsRepository(SnowflakeConnectionFactory connectionFac
                 cancellationToken: cancellationToken));
 
         return rows.AsList();
+    }
+
+    public async Task<IReadOnlyList<StockNewsEventSearchResult>> SearchEventsAsync(
+        string searchText,
+        int limit = 25,
+        bool useCortexSearch = false,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(searchText))
+        {
+            return [];
+        }
+
+        var boundedLimit = Math.Clamp(limit, 1, MaxSearchResults);
+        var sql = useCortexSearch
+            ? BuildCortexSearchSql(searchText.Trim(), boundedLimit)
+            : SqlFileLoader.Load("stock-news-event-search.sql");
+        var parameters = useCortexSearch
+            ? null
+            : new
+            {
+                searchText = searchText.Trim(),
+                limit = boundedLimit
+            };
+
+        await using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+
+        var rows = await connection.QueryAsync<StockNewsEventSearchResult>(
+            new CommandDefinition(
+                sql,
+                parameters,
+                cancellationToken: cancellationToken));
+
+        return rows.AsList();
+    }
+
+    private static string BuildCortexSearchSql(string searchText, int limit)
+    {
+        var queryParameters = JsonSerializer.Serialize(new
+        {
+            query = searchText,
+            columns = new[] { "HEADLINE", "STOCK", "DATE", "PUBLISHER", "SENTIMENT" },
+            limit
+        });
+
+        return SqlFileLoader
+            .Load("stock-news-event-cortex-search.sql")
+            .Replace("__queryParametersJson__", EscapeSqlLiteral(queryParameters), StringComparison.Ordinal);
+    }
+
+    private static string EscapeSqlLiteral(string value)
+    {
+        return value.Replace("'", "''", StringComparison.Ordinal);
     }
 
     public async Task<StockNews?> GetByIdAsync(
