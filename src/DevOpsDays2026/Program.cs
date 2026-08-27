@@ -25,6 +25,7 @@ builder.Services.AddSingleton<SnowflakeConnectionStringBuilder>();
 builder.Services.AddSingleton<SnowflakeConnectionFactory>();
 builder.Services.AddScoped<StockRepository>();
 builder.Services.AddScoped<StockNewsRepository>();
+builder.Services.AddScoped<WeatherRepository>();
 builder.Services.AddValidatorsFromAssemblyContaining<StockNewsRequestValidator>();
 
 var app = builder.Build();

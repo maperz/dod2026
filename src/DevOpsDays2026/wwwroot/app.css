@@ -199,6 +199,10 @@ button:disabled {
     display: flex;
 }
 
+.weather-search {
+    grid-template-columns: minmax(220px, 1fr) auto;
+}
+
 .switch-field {
     display: inline-flex;
     align-items: center;
@@ -362,6 +366,10 @@ tr:last-child td {
 
 .stock-news-table {
     min-width: 940px;
+}
+
+.weather-table {
+    min-width: 760px;
 }
 
 .headline-cell {
