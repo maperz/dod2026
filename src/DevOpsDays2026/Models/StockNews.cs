@@ -8,11 +8,16 @@ public sealed class StockNews
     public DateTime Date { get; init; }
 }
 
-public sealed record StockNewsRequest(
-    Guid Id,
-    string Ticker,
-    string Text,
-    string Date);
+public sealed record StockNewsRequest
+{
+    public required Guid Id { get; init; }
+
+    public required string Ticker { get; init; }
+
+    public required string Text { get; init; }
+
+    public required DateTimeOffset Date { get; init; }
+}
 
 public sealed class StockNewsEventSearchResult
 {

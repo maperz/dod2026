@@ -34,7 +34,8 @@ public static class StockNewsEndpoints
         {
             var row = await repository.CreateAsync(request, cancellationToken);
             return Results.Created($"/api/stock-news/{row.Id}", row);
-        });
+        })
+        .AddEndpointFilter<ValidationFilter<StockNewsRequest>>();
 
         group.MapPut("/{id:guid}", async (
             Guid id,
@@ -44,7 +45,8 @@ public static class StockNewsEndpoints
         {
             var row = await repository.UpdateAsync(id, request, cancellationToken);
             return row is null ? Results.NotFound() : Results.Ok(row);
-        });
+        })
+        .AddEndpointFilter<ValidationFilter<StockNewsRequest>>();
 
         group.MapDelete("/{id:guid}", async (
             Guid id,

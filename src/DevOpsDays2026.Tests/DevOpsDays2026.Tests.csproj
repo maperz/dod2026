@@ -20,10 +20,4 @@
         <ProjectReference Include="..\DevOpsDays2026\DevOpsDays2026.csproj"/>
     </ItemGroup>
 
-    <ItemGroup>
-      <Content Include="..\..\ci.env">
-        <Link>ci.env</Link>
-      </Content>
-    </ItemGroup>
-
 </Project>

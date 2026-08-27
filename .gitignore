@@ -6,6 +6,10 @@
 # User-specific files
 .DS_Store
 .codex/
+app.env
+ci.env
+app.json
+ci.json
 *.suo
 *.user
 *.userosscache

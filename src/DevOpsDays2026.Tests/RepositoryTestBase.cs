@@ -1,21 +1,27 @@
 using Dapper;
 using DevOpsDays2026.Data.Common;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DevOpsDays2026.Tests;
 
 public abstract class RepositoryTestBase
 {
-    private static readonly string[] RequiredSnowflakeEnvironmentVariables =
-    [
-        "SNOWFLAKE_ACCOUNT",
-        "SNOWFLAKE_USER",
-        "SNOWFLAKE_PASSWORD",
-        "SNOWFLAKE_WAREHOUSE"
-    ];
+    private static readonly IServiceProvider Services;
 
     static RepositoryTestBase()
     {
-        EnvironmentFileLoader.Load(EnvironmentFileLoader.GetEnvironmentFilePath("ci.env"));
+        var configuration = new ConfigurationBuilder()
+            .AddJsonFile("app.json", optional: true)
+            .AddJsonFile("ci.json", optional: true)
+            .AddEnvironmentVariables()
+            .Build();
+
+        Services = new ServiceCollection()
+            .AddSingleton<IConfiguration>(configuration)
+            .AddSingleton<SnowflakeConnectionStringBuilder>()
+            .AddSingleton<SnowflakeConnectionFactory>()
+            .BuildServiceProvider();
 
         SqlMapper.Settings.UseIncrementalPseudoPositionalParameterNames = true;
         SqlMapper.AddTypeHandler(new GuidTypeHandler());
@@ -23,17 +29,6 @@ public abstract class RepositoryTestBase
 
     protected static SnowflakeConnectionFactory CreateSnowflakeConnectionFactory()
     {
-        var missingVariables = RequiredSnowflakeEnvironmentVariables
-            .Where(name => string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(name)))
-            .ToArray();
-
-        if (missingVariables.Length > 0)
-        {
-            throw new InvalidOperationException(
-                $"Missing required environment variables: {string.Join(", ", missingVariables)}");
-        }
-
-        return new SnowflakeConnectionFactory(
-            SnowflakeConnectionStringBuilder.BuildFromEnvironment());
+        return Services.GetRequiredService<SnowflakeConnectionFactory>();
     }
 }

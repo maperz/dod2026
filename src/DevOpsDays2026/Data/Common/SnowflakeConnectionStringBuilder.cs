@@ -1,16 +1,27 @@
 namespace DevOpsDays2026.Data.Common;
 
-public static class SnowflakeConnectionStringBuilder
+using Microsoft.Extensions.Configuration;
+
+public sealed class SnowflakeConnectionStringBuilder(IConfiguration configuration)
 {
-    public static string BuildFromEnvironment()
+    public string Build()
     {
-        var account = Required("SNOWFLAKE_ACCOUNT");
-        var user = Required("SNOWFLAKE_USER");
-        var password = Required("SNOWFLAKE_PASSWORD");
-        var warehouse = Required("SNOWFLAKE_WAREHOUSE");
-        var database = Environment.GetEnvironmentVariable("SNOWFLAKE_DATABASE");
-        var schema = Environment.GetEnvironmentVariable("SNOWFLAKE_SCHEMA") ?? "PUBLIC";
-        var role = Environment.GetEnvironmentVariable("SNOWFLAKE_ROLE");
+        var connectionString = configuration.GetConnectionString("Snowflake")
+                               ?? configuration["Snowflake:ConnectionString"]
+                               ?? configuration["SNOWFLAKE_CONNECTION_STRING"];
+
+        if (!string.IsNullOrWhiteSpace(connectionString))
+        {
+            return connectionString;
+        }
+
+        var account = Required("Account", "SNOWFLAKE_ACCOUNT");
+        var user = Required("User", "SNOWFLAKE_USER");
+        var password = Required("Password", "SNOWFLAKE_PASSWORD");
+        var warehouse = Required("Warehouse", "SNOWFLAKE_WAREHOUSE");
+        var database = Value("Database", "SNOWFLAKE_DATABASE");
+        var schema = Value("Schema", "SNOWFLAKE_SCHEMA") ?? "PUBLIC";
+        var role = Value("Role", "SNOWFLAKE_ROLE");
 
         var parts = new List<string>
         {
@@ -34,15 +45,21 @@ public static class SnowflakeConnectionStringBuilder
         return string.Join(';', parts);
     }
 
-    private static string Required(string name)
+    private string Required(string key, string environmentVariable)
     {
-        return Environment.GetEnvironmentVariable(name)
+        return Value(key, environmentVariable)
                ?? throw new InvalidOperationException(
-                   $"Required environment variable '{name}' is not set.");
+                   $"Required Snowflake configuration value 'Snowflake:{key}' or '{environmentVariable}' is not set.");
+    }
+
+    private string? Value(string key, string environmentVariable)
+    {
+        var value = configuration[$"Snowflake:{key}"] ?? configuration[environmentVariable];
+        return string.IsNullOrWhiteSpace(value) ? null : value;
     }
 
     // ADO.NET connection strings use doubled '=' characters inside values.
-    private static string Escape(string value)
+    private string Escape(string value)
     {
         return value.Replace("=", "==");
     }

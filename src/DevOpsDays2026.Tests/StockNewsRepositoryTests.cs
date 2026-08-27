@@ -21,7 +21,7 @@ public sealed class StockNewsRepositoryTests : RepositoryTestBase
             Assert.Equal(id, created.Id);
             Assert.Equal("MSFT", created.Ticker);
             Assert.Equal(createRequest.Text, created.Text);
-            Assert.Equal(DateTime.Parse(createRequest.Date), created.Date);
+            Assert.Equal(createRequest.Date.Date, created.Date);
         }
         finally
         {
@@ -78,10 +78,12 @@ public sealed class StockNewsRepositoryTests : RepositoryTestBase
 
     private static StockNewsRequest CreateStockNewsRequest(Guid id)
     {
-        return new StockNewsRequest(
-            id,
-            "MSFT",
-            "MSFT opens higher in integration test.",
-            "2026-08-15");
+        return new StockNewsRequest
+        {
+            Id = id,
+            Ticker = "MSFT",
+            Text = "MSFT opens higher in integration test.",
+            Date = new DateTimeOffset(2026, 8, 15, 0, 0, 0, TimeSpan.Zero)
+        };
     }
 }
