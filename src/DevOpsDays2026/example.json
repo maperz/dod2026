@@ -1,11 +1,11 @@
 {
-  "Snowflake": {
-    "Account": "myorg-myaccount",
-    "User": "my_user",
-    "Password": "my_password",
-    "Warehouse": "COMPUTE_WH",
-    "Database": "DEMO_DB",
-    "Schema": "PUBLIC",
-    "Role": "DEVELOPER"
-  }
+    "Snowflake": {
+        "Account": "myorg-myaccount",
+        "User": "DOD_USER",
+        "Password": "<your-pat-token>",
+        "Warehouse": "DOD_WAREHOUSE",
+        "Database": "DOD2026",
+        "Schema": "PUBLIC",
+        "Role": "DOD_DEVELOPER"
+    }
 }

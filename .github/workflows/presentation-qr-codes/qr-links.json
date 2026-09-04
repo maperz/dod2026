@@ -8,8 +8,9 @@
     "cornersDot": "dot"
   },
   "paths": [
-    "demo/",
-    "Misc/Data/stock-data.zip"
+    "LiveDemo",
+    "LiveDemo/Sql",
+    "LiveDemo/Data/stock-data.zip"
   ],
   "externalLinks": [
     {
