@@ -13,6 +13,10 @@
   ],
   "externalLinks": [
     {
+      "label": "Manfred DevOpsDays Repo",
+      "url": "https://github.com/manfredwippel/DoD2026_Demo"
+    },
+    {
       "label": "Snowflake app",
       "url": "https://app.snowflake.com"
     },
