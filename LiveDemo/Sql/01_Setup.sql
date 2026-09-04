@@ -38,7 +38,7 @@ SHOW GRANTS TO USER "DOD_USER";
 -- User can now successfully sign into SnowSight but will be prompted for MFA
 -- Programatic access tokens can be used instead of a password
 ALTER USER IF EXISTS "DOD_USER" ADD PROGRAMMATIC ACCESS TOKEN "DEV_ACCESS_TOKEN"
-  DAYS_TO_EXPIRY = 30,
+  DAYS_TO_EXPIRY = 30
   ROLE_RESTRICTION = 'DOD_DEVELOPER'
   COMMENT = 'A developer token that expires after a month';
 
